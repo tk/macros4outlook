@@ -1,3 +1,4 @@
+Attribute VB_Name = "Tools"
 Option Explicit
    
 Global InterceptorCollection As New Collection
