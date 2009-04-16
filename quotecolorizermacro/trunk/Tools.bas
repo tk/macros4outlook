@@ -1,4 +1,3 @@
-Attribute VB_Name = "Tools"
 Option Explicit
    
 Global InterceptorCollection As New Collection
@@ -55,3 +54,42 @@ Public Sub FranksMacro(CurrentItem As MailItem)
     End If
     
 End Sub
+
+
+Public Sub TestPar()
+    Dim s As String
+    Dim ret As String
+    Dim cmd As String
+    
+    Dim shell As Object
+    Dim pipe As Object
+    Set shell = CreateObject("WScript.Shell")
+    
+    s = "test daniel 23e " & vbCrLf & _
+        "> asd asd sad " & vbCrLf & _
+        "> sad asdad as " & vbCrLf & _
+        ">> sa asddsa asd aas kj kj kj k jlkjhlkjhsda asdf asdf adsf as df asdf ads fa dsfa dsf " & vbCrLf & _
+        ">> aasd asdaasdf asd fasdf asd f asd fa sdf adsf asdf saas " & vbCrLf & _
+        "> sasad asda  sasd asd asd asd asd aasdf asdf as df asdf a sd f asd f as df asd fasdf a sdf asdf sdasdasd "
+  
+    cmd = "C:\Programme\cygwin\bin\bash.exe --login -c 'export PARINIT=""rTbgqR B=.,?_A_a Q=_s>|"" ; par 60q'"
+  
+    Debug.Print cmd
+    Set pipe = shell.Exec(cmd)
+    Debug.Print "END PAR"
+    
+    pipe.StdIn.Write (s)
+    pipe.StdIn.Close
+    
+    
+    Debug.Print "READING..."
+    'While (pipe.StdOut.AtEndOfStream = False)
+    '    ret = ret + pipe.StdOut.ReadLine() + vbCrLf
+    'Wend
+    ret = pipe.StdOut.ReadAll()
+    Debug.Print ret
+    
+    Set pipe = Nothing
+    Set shell = Nothing
+End Sub
+
