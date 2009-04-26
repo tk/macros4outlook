@@ -1,7 +1,7 @@
 Attribute VB_Name = "QuoteFixMacro"
-'QuoteFix Macro 1.2b
-'QuoteFix Macro is part of the Outlook Theurgists - tools for ms Outlook.
-'see http://www.flupp.de/OutlookTheurgists for more information
+'QuoteFix Macro TRUNK
+'QuoteFix Macro is part of the macros4outlook project
+'see http://sourceforge.net/projects/macros4outlook/ for more information
 '
 'For more information on Outlook see http://www.microsoft.com/outlook
 'Outlook is (C) by Microsoft
@@ -16,7 +16,7 @@ Attribute VB_Name = "QuoteFixMacro"
 '
 'If you don't have money (or don't like the software that much, but
 'appreciate the development), please send an email to
-'daniel309 [at] users [dot] sourceforge [dot] net  or theurgists [at] flupp [dot] de
+'theurgists [at] flupp [dot] de
 '
 'Thank you :-)
 
@@ -24,7 +24,7 @@ Attribute VB_Name = "QuoteFixMacro"
 '****************************************************************************
 'License:
 '
-'QuoteFix Macro 1.2b copyright 2006 Oliver Kopp and Daniel Martin. All rights reserved.
+'QuoteFix Macro TRUNK copyright 2006-2009 Oliver Kopp and Daniel Martin. All rights reserved.
 '
 'Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 '
@@ -55,6 +55,9 @@ Attribute VB_Name = "QuoteFixMacro"
 '
 'Version 1.2b - 2007-01-24
 ' * included on-behalf-of handling written by Per Soderlind (per [at] soderlind [dot] no)
+'
+'Version TRUNK - not released
+' * included %C patch 2778722 by Karsten Heimrich
 
 'Ideas were taken from
 '  * Daniele Bochicchio
@@ -405,17 +408,13 @@ End Function
 
 
 Private Sub FixMailText(SelectedObject As Object, MailMode As ReplyType)
-
-    Dim OriginalMail As MailItem
     Dim TempObj As Object
     
-
     'wir verstehen nur mail items, keine PostItems, NoteItems, ...
     If Not (TypeName(SelectedObject) = "MailItem") Then
         On Error GoTo catch:   'try, catch ersatz
         Dim HadError As Boolean
         HadError = True
-                          
                           
         Select Case MailMode
             Case TypeReply:
@@ -435,7 +434,6 @@ Private Sub FixMailText(SelectedObject As Object, MailMode As ReplyType)
                     Exit Sub 'ende, wir koennen nix mehr machen ausser anzeigen
         End Select
         
-        
 catch:
         On Error GoTo 0  'fehlerbehandlung wieder auschalten
         
@@ -445,11 +443,10 @@ catch:
             SelectedObject.Display
             Exit Sub 'ENDE
         End If
-    
-    Else
-        Set OriginalMail = SelectedObject  'cast machen!!!
     End If
 
+    Dim OriginalMail As MailItem
+    Set OriginalMail = SelectedObject  'cast machen!!!
 
     'wir verstehen keine HTML mails!!!   ...noch nicht, Olly, magst du da mal ran?
     If Not (OriginalMail.BodyFormat = olFormatPlain) Then
@@ -468,91 +465,78 @@ catch:
         Exit Sub   'ENDE
     End If
     
-    
     'erzeuge reply --> outlook style!
     Dim NewMail As MailItem
     Select Case MailMode
-        Case TypeReply: Set NewMail = OriginalMail.reply
-        Case TypeReplyAll: Set NewMail = OriginalMail.ReplyAll
-        Case TypeForward: Set NewMail = OriginalMail.Forward
+        Case TypeReply:
+                Set NewMail = OriginalMail.reply
+        Case TypeReplyAll:
+                Set NewMail = OriginalMail.ReplyAll
+        Case TypeForward:
+                Set NewMail = OriginalMail.Forward
     End Select
     
+    Dim BodyLines() As String
+    BodyLines = Split(NewMail.Body, vbCrLf)
     
-    Dim text As String
-    text = NewMail.Body 'diese zeile erzeugt die warnmeldung !!! --> jetzt nichtmehr --> session.application
-    'MsgBox text
+    Dim BodyLineCount As Integer
+    BodyLineCount = UBound(BodyLines)
     
-    Dim lines() As String
-    lines = Split(text, vbCrLf)
-    
-    Dim QuotedText As String
+    ' A new mail starts with signature -if- set, try to parse until we find the the
+    ' original message separator - might loop until the end of the whole message since
+    ' this depends on the International Option settings (english), even worse it might
+    ' find some separator in-between and mess up the whole reply, so check the nesting too.
     Dim MySignature As String
-    Dim OutlookHeader As String
+    
     Dim i As Integer
-    Dim curLine As String
-   ' Dim NewHeader As String
-   
-    'This information is useless at most of the time, isn't it?
-    'NewHeader = OriginalMail.SenderName & " wrote on " & Format(OriginalMail.SentOn, "yyyy-mm-dd") & ":"
-    
-    'Die ersten beiden Leerzeilen ?berspringen
-    i = 2
-    
-    'Als erstes kommt die Signatur
-    'In VBA werden beide Teile eines ifs gleichzeitig gepr?ft, deshalb "i < UBound(lines)"
-    Do While i < UBound(lines) And ((InStr(lines(i), Outlook_OriginalMessage) = 0))
-        MySignature = MySignature & lines(i) & vbCrLf
-        i = i + 1
-    Loop
-    
-    
+    ' drop the first two lines, they're empty
+    For i = 2 To BodyLineCount
+        If (InStr(BodyLines(i), Outlook_OriginalMessage) <> 0) Then
+            If (CalcNesting(BodyLines(i)).level = 1) Then
+                Exit For
+            End If
+        End If
+        MySignature = MySignature & BodyLines(i) & vbCrLf
+    Next i
     
     'Wildcard replaces
     Dim fromName As String
-    Dim firstName As String
-    Dim pos As Integer
+    fromName = OriginalMail.SentOnBehalfOfName
     
-    
-    If OriginalMail.SentOnBehalfOfName = "" Then
-      fromName = OriginalMail.SenderName
-    Else
-      fromName = OriginalMail.SentOnBehalfOfName
+    If fromName = "" Then
+        fromName = OriginalMail.SenderName
     End If
     
-    firstName = fromName
-    pos = InStr(firstName, " ")
-    If pos = 0 Then
-      'No first name could be parsed
-      firstName = ""
-    Else
-      firstName = Left(firstName, pos - 1)
+    Dim pos As Integer
+    pos = InStr(fromName, " ")
+    
+    Dim firstName As String
+    If pos > 0 Then
+        firstName = Left(fromName, pos - 1)
     End If
     
     MySignature = Replace(MySignature, PATTERN_FIRST_NAME, firstName)
     MySignature = Replace(MySignature, PATTERN_SENT_DATE, Format(OriginalMail.SentOn, DATE_FORMAT))
     MySignature = Replace(MySignature, PATTERN_SENDER_NAME, fromName)
     
+    ' parse until we find the header finish "> " (Outlook_Headerfinish)
+    Dim OutlookHeader As String
+    For i = i To BodyLineCount
+        OutlookHeader = OutlookHeader & BodyLines(i) & vbCrLf
+        If (BodyLines(i) = Outlook_Headerfinish) Then
+            Exit For
+        End If
+    Next i
     
-    'Dann kommt der Header von Outlook. Abgeschlossen durch "> " (Outlook_Headerfinish)
-    Do While (i < UBound(lines)) And (lines(i) <> Outlook_Headerfinish)
-        'F?r die Freaks, die beim Forwarden auch ">" brauchen...
-        OutlookHeader = OutlookHeader & lines(i) & vbCrLf
-        i = i + 1
-    Loop
-    OutlookHeader = OutlookHeader & Outlook_Headerfinish & vbCrLf
-    
-    i = i + 1
-    
-    'Jetzt kommt der eigentliche Text:
-    Do While i <= UBound(lines)
-        QuotedText = QuotedText & lines(i) & vbCrLf
-        i = i + 1
-    Loop
+    ' parse the rest of the message
+    Dim QuotedText As String
+    For i = i To BodyLineCount
+        QuotedText = QuotedText & BodyLines(i) & vbCrLf
+    Next i
     
     QuotedText = ReFormatText(QuotedText)
     
     Dim NewText As String
-        
     'Mail je nach Knopf einzusetzenden Text zusammenbauen
     Select Case MailMode
         Case TypeReply:
@@ -563,42 +547,34 @@ catch:
                 NewText = OutlookHeader & QuotedText
     End Select
     
+    'Put text in signature (=Template for text)
+    MySignature = Replace(MySignature, "PATTERN_OUTLOOK_HEADER" & vbCrLf, OutlookHeader)
+    
+    If InStr(MySignature, PATTERN_QUOTED_TEXT) <> 0 Then
+        MySignature = Replace(MySignature, PATTERN_QUOTED_TEXT, NewText)
+    Else
+        'There's no placeholder. Fall back to outlook behavior
+        MySignature = vbCrLf & vbCrLf & MySignature & OutlookHeader & NewText
+    End If
+   
     'Calculate number of downs to sent
     Dim downCount As Integer
     downCount = -1
     
     If (InStr(MySignature, PATTERN_CURSOR_POSITION) <> 0) Then
         downCount = CalcDownCount(PATTERN_CURSOR_POSITION, MySignature)
-    ElseIf InStr(MySignature, PATTERN_QUOTED_TEXT) <> 0 Then
-        downCount = CalcDownCount(PATTERN_QUOTED_TEXT, MySignature)
+        MySignature = Replace(MySignature, PATTERN_CURSOR_POSITION, "")
     End If
     
-    'Put text in signature (=Template for text)
+    NewMail.Body = MySignature
     
-    MySignature = Replace(MySignature, "PATTERN_OUTLOOK_HEADER" & vbCrLf, OutlookHeader)
-    MySignature = Replace(MySignature, PATTERN_CURSOR_POSITION, "")
-    
-    If InStr(MySignature, PATTERN_QUOTED_TEXT) <> 0 Then
-        NewMail.Body = Replace(MySignature, PATTERN_QUOTED_TEXT, NewText)
-    Else
-        'There's no placeholder. Fall back to outlook behavior
-        NewMail.Body = vbCrLf & vbCrLf & MySignature & OutlookHeader & NewText
-        
-        'If there was "%C" used (downcount is set and therefore <> -1), adjust ist (because of the two newlines above)
-        If downCount <> -1 Then
-            downCount = downCount + 2
-        End If
-    End If
-   
-    'Display window
-    Dim mid As String
-    
-    'Extensions, if Colorize and SoftWrap is activated
+    'Extensions, in case Colorize and SoftWrap are activated
     mid = QuoteColorizerMacro.ColorizeMailItem(NewMail)
     If (Trim("" & mid) <> "") Then  'no error occured or quotefix macro not there...
         Call QuoteColorizerMacro.DisplayMailItemByID(mid)
         Call SoftWrapMacro.ResizeWindowForSoftWrap
     Else
+        'Display window
         NewMail.Display
     End If
     
@@ -641,7 +617,6 @@ End Function
 'Note:
 '  * Order of parameters taken from "InStr"
 Public Function CountOccurencesOfStringInString(InString As String, What As String) As Integer
-
     Dim count As Integer
     Dim lastPos As Integer
     Dim curPos As Integer
@@ -657,5 +632,3 @@ Public Function CountOccurencesOfStringInString(InString As String, What As Stri
         
     CountOccurencesOfStringInString = count
 End Function
-
-
