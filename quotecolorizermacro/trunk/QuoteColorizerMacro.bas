@@ -52,15 +52,22 @@ Public Function ColorizeMailItem(MyMailItem As MailItem) As String
         
         'we have out own rtf haeder, remove generated one
         Dim PosHeaderEnd As Integer
+        Dim sTestString As String
         PosHeaderEnd = InStr(rtf, "\uc1\pard\plain\deftab360")
         If (PosHeaderEnd = 0) Then
-            PosHeaderEnd = InStr(rtf, "\uc1\pard\f0\fs20\lang1031")
+            sTestString = "\uc1\pard\f0\fs20\lang1031"
+            PosHeaderEnd = InStr(rtf, sTestString)
         End If
         If (PosHeaderEnd = 0) Then
-            PosHeaderEnd = InStr(rtf, "\viewkind4\uc1\pard\f0\fs20")
+            sTestString = "\viewkind4\uc1\pard\f0\fs20"
+            PosHeaderEnd = InStr(rtf, sTestString)
+        End If
+        If (PosHeaderEnd = 0) Then
+            sTestString = "\pard\f0\fs20\lang1031"
+            PosHeaderEnd = InStr(rtf, sTestString)
         End If
         
-        rtf = mid(rtf, PosHeaderEnd)
+        rtf = mid(rtf, PosHeaderEnd + Len(sTestString))
         
         rtf = "{\rtf1\ansi\ansicpg1252 \deff0{\fonttbl" & vbCrLf & _
                 "{\f0\fswiss\fcharset0 Courier New;}}" & vbCrLf & _
