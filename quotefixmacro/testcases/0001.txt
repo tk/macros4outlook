@@ -1,0 +1,47 @@
+Hi. This is the qmail-send program at xxx.de.
+I tried to deliver a bounce message to this address, but the bounce  
+bounced!
+
+<info@xxx.de>:
+1.1.1.1 failed after I sent the message.
+Remote host said: 550-Bounce is not valid for (info@xxx.de). (ID:550:2:6
+550 (mi025.xxx.de))
+
+--- Below this line is the original bounce.
+
+Return-Path: <>
+Received: (qmail 17148 invoked for bounce); 30 Apr 2009 10:11:14 +0200
+Date: 30 Apr 2009 10:11:14 +0200
+From: MAILER-DAEMON@xxx.de
+To: info@xxx.de
+Subject: failure notice
+
+Hi. This is the qmail-send program at xxx.de.
+I'm afraid I wasn't able to deliver your message to the following  
+addresses.
+This is a permanent error; I've given up. Sorry it didn't work out.
+
+<s.xx@xx.de>:
+1.1.1.1 does not like recipient.
+Remote host said: 550 unrouteable address
+Giving up on 1.1.1.1.
+
+--- Below this line is a copy of the message.
+
+Return-Path: <info@xxx.de>
+Received: (qmail 16930 invoked by uid 0); 30 Apr 2009 10:10:57 +0200
+Date: 30 Apr 2009 10:10:57 +0200
+Message-ID: <20090430081057.16927.qmail@xxx.de>
+To: s.xxx@xxx.de
+Subject: Neu
+MIME-Version: 1.0
+from: xxx <info@xxx.de>
+Content-Type:text/html;charset=iso-8859-1
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01  
+Transitional//EN""http://www.w3.org/TR/html4/loose.dtd"><html><head><title>xxx.de</title>  
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">  
+<base href="http://www.xxx.de/"></head><body>
+
+<style type="text/css">
