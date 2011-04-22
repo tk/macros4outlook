@@ -20,6 +20,9 @@ Attribute VB_Name = "AddContactMacro"
 
 'Changelog
 '
+'Version 1.0 - 2011-04-22
+' * first public relese
+'
 '$Revision$ - not released
 
 Option Explicit
