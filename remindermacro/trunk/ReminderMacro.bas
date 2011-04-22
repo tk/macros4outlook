@@ -1,4 +1,15 @@
 Attribute VB_Name = "ReminderMacro"
+'$Id$
+'
+'Reminder Macro TRUNK
+'
+'Reminder Macro is part of the macros4outlook project
+'see https://sourceforge.net/apps/mediawiki/macros4outlook/index.php?title=Reminder_Macro or
+'    http://sourceforge.net/projects/macros4outlook/ for more information
+'
+'For more information on Outlook see http://www.microsoft.com/outlook
+'Outlook is (C) by Microsoft
+
 Option Explicit
 
 '------------------------------------------------------------------------------------------
@@ -24,6 +35,7 @@ Option Explicit
 '                           which must be installed/registered in Windows, and referenced,
 '                           Tools> References...> SafeOutlook Library, in Outlook VBA.
 '           : 7/13/2006   - DM: Removed dependecies to "Outlook redemption" library
+'                           Released as v1.0 by macros4outlook project
 '------------------------------------------------------------------------------------------
 
 Sub CheckMailText(ByVal Item As Object, Cancel As Boolean)
