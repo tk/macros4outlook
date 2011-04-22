@@ -1,9 +1,10 @@
 Attribute VB_Name = "Tools"
-'$Id: QuoteFixMacro.bas 57 2011-03-14 15:02:18Z larsen255 $
+'$Id$
 '
-'QuoteColorizerMacro TRUNK
+'Tools TRUNK
+'contains test routines
 '
-'QuoteColorizerMacro is part of the macros4outlook project
+'Tools is part of the macros4outlook project
 'see http://sourceforge.net/projects/macros4outlook/ for more information
 '
 'For more information on Outlook see http://www.microsoft.com/outlook
@@ -12,7 +13,7 @@ Attribute VB_Name = "Tools"
 '****************************************************************************
 'License:
 '
-'QuoteColorizerMacro
+'Tools
 '  copyright 2006-2009 Daniel Martin. All rights reserved.
 '
 '
@@ -24,6 +25,10 @@ Attribute VB_Name = "Tools"
 '
 'THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 '****************************************************************************
+
+'Changelog
+'
+'$Revision$ - not released
 
 Option Explicit
    
