@@ -1,4 +1,27 @@
 Attribute VB_Name = "AddContactMacro"
+'$Id$
+'
+'Add Contact Macro TRUNK
+'
+'Add Contact Macro is part of the macros4outlook project
+'see https://sourceforge.net/apps/mediawiki/macros4outlook/index.php?title=Add_Contact_Macro or
+'    http://sourceforge.net/projects/macros4outlook/ for more information
+'
+'For more information on Outlook see http://www.microsoft.com/outlook
+'Outlook is (C) by Microsoft
+
+'****************************************************************************
+'License:
+'
+' sample Outlook 2003 VBA application by Sue Mosher
+' send questions/comments to webmaster@outlookcode.com
+' modified by daniel309@users.sourceforge.net
+'****************************************************************************
+
+'Changelog
+'
+'$Revision$ - not released
+
 Option Explicit
 
 
@@ -6,9 +29,6 @@ Private Const AUTO_CONTACT_FOLDER_NAME As String = "AutoContacts"
 
 
 
-' sample Outlook 2003 VBA application by Sue Mosher
-' send questions/comments to webmaster@outlookcode.com
-' modified by daniel309@users.sourceforge.net
 
 Public Sub AddRecipToContacts(ByVal MailItem As Object)
     Dim strFind As String
@@ -32,7 +52,7 @@ Public Sub AddRecipToContacts(ByVal MailItem As Object)
     Set objNS = Application.GetNamespace("MAPI")
     Set objContactFolder = objNS.GetDefaultFolder(olFolderContacts)
     
-    On Error Resume Next  'to skip error if folder isnt in .Folders(...)!
+    On Error Resume Next  'to skip error if folder isn't in .Folders(...)!
     'see if autocontactfolder already exists
     Set objNewContactFolder = objContactFolder.Folders(AUTO_CONTACT_FOLDER_NAME)
     If (objNewContactFolder Is Nothing) Then 'error occured!
@@ -59,7 +79,7 @@ Public Sub AddRecipToContacts(ByVal MailItem As Object)
         If objContact Is Nothing Then
             Set objContact = Application.CreateItem(olContactItem)
             With objContact
-                .FullName = Replace(objRecip.name, "'", "")
+                .FullName = Replace(objRecip.Name, "'", "")
                 .Email1Address = objRecip.Address
                 .Save
                 .Move objNewContactFolder
@@ -79,5 +99,3 @@ End Sub
 Private Function AddQuote(MyText As String) As String
     AddQuote = Chr(34) & MyText & Chr(34)
 End Function
-
-
