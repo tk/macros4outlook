@@ -1,7 +1,7 @@
 Attribute VB_Name = "QuoteFixMacro"
 '$Id$
 '
-'QuoteFix Macro TRUNK
+'QuoteFix Macro Version 1.4
 '
 'QuoteFix Macro is part of the macros4outlook project
 'see http://sourceforge.net/projects/macros4outlook/ for more information
@@ -97,9 +97,6 @@ Attribute VB_Name = "QuoteFixMacro"
 '  * Applied patch 3296731 by Matej Mihelic - Replaced hardcoded call to "MAPI"
 '  * Added LoadConfiguration() so you can store personal settings in the registry. These won´t get lost when updating the macro
 
-'$Revision$ - not released
-'  * <no changes until now>
-'
 'Ideas were taken from
 '  * Daniele Bochicchio
 '    Button integration and sample code - http://lab.aspitalia.com/35/Outlook-2007-2003-Reply-With-Quoting-Macro.aspx
