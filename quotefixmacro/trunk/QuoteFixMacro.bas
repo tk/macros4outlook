@@ -83,7 +83,7 @@ Attribute VB_Name = "QuoteFixMacro"
 ' * added USE_COLORIZER and USE_SOFTWRAP conditional compiling flags.
 '     They enable QuoteColorizerMacro and SoftWrapMacro
 ' * splitted code for parsing mailtext from FixMailText() into smaller functions
-' * added support of removing the sender´s signature
+' * added support of removing the senderÂ´s signature
 ' * bugfix: FinishBlock() would in some cases throw error 5
 ' * bugfix: Prevent error 91 when mail is marked as possible phishing mail
 ' * Original mail is marked as read
@@ -99,11 +99,11 @@ Attribute VB_Name = "QuoteFixMacro"
 '  * Added support for custom template configured in the macro (QUOTING_TEMPLATE) - this can be used instead of the signature configuration
 '  * Merged SoftWrap and QuoteColorizerMacro into QuoteFixMacro.bas
 '  * Applied patch 3296731 by Matej Mihelic - Replaced hardcoded call to "MAPI"
-'  * Added LoadConfiguration() so you can store personal settings in the registry. These won´t get lost when updating the macro
+'  * Added LoadConfiguration() so you can store personal settings in the registry. These wonÂ´t get lost when updating the macro
 '
 'Version 1.5 - 2012-01-11
 '  * bugfix: When a mail was signed or encrypted with PGP, the reformatting would yield incorrect results
-'  * bugfix: When a sender´s name could not be determined correctly, it would have thrown an error 5
+'  * bugfix: When a senderÂ´s name could not be determined correctly, it would have thrown an error 5
 '  * Letters of first name are also lower cased
 '  * Only the first word of a potential first name is used as first name
 '  * support for fixed firstNames for configured email adresses
@@ -149,6 +149,24 @@ Private Const REG_GROUP_FIRSTNAMES As String = "Firstnames" 'stores replacements
 
 
 '--------------------------------------------------------
+'*** Feature LanguageSpecificQuote ***
+'--------------------------------------------------------
+  
+Private Const AZURE_CLIENT_ID As String = "client_id_xxx"
+Private Const AZURE_CLIENT_SECRET As String = "123456789..."
+
+'local two-character Language code
+Private Const DEFAULT_LOCAL_LANG As String = "de"
+
+'alternative wish in signature
+Private Const DEFAULT_WISH_EN As String = "Best regards"
+Private Const DEFAULT_WISH_LOCAL As String = "Viele GrÃ¼ÃŸe"
+
+'alternative wish in signature
+Private Const DEFAULT_GREETING_EN As String = "Hello"
+Private Const DEFAULT_GREETING_LOCAL As String = "Hallo"
+
+'--------------------------------------------------------
 '*** Feature QuoteColorizer ***
 '--------------------------------------------------------
 Private Const DEFAULT_USE_COLORIZER As Boolean = False
@@ -191,7 +209,7 @@ Private Const DEFAULT_DATE_FORMAT As String = "yyyy-mm-dd"
 'alternative date format
 'Private Const DEFAULT_DATE_FORMAT As String = "ddd, d MMM yyyy at HH:mm:ss"
 
-'Strip the sender´s signature?
+'Strip the senderÂ´s signature?
 Private Const DEFAULT_STRIP_SIGNATURE As Boolean = True
 
 'Automatically convert HTML/RTF-Mails to plain text?
@@ -224,7 +242,7 @@ Private Const DEFAULT_CONDENSED_HEADER_FORMAT As String = "%SN wrote on %D:"
 
 
 Private Const OUTLOOK_PLAIN_ORIGINALMESSAGE As String = "-----"
-'Private Const OUTLOOK_PLAIN_ORIGINALMESSAGE = "-----Ursprüngliche Nachricht-----"
+'Private Const OUTLOOK_PLAIN_ORIGINALMESSAGE = "-----UrsprÃ¼ngliche Nachricht-----"
 'Private Const OUTLOOK_PLAIN_ORIGINALMESSAGE = "-----Original Message-----"
 Private Const OUTLOOK_ORIGINALMESSAGE   As String = "> " & OUTLOOK_PLAIN_ORIGINALMESSAGE
 Private Const PGP_MARKER                As String = "-----BEGIN PGP"
@@ -239,6 +257,9 @@ Private Const PATTERN_FIRST_NAME        As String = "%FN"
 Private Const PATTERN_SENT_DATE         As String = "%D"
 Private Const PATTERN_OUTLOOK_HEADER    As String = "%OH"
 
+'Extension for Language dependend quote
+Private Const PATTERN_WISHES            As String = "%WISH"
+Private Const PATTERN_GREETING          As String = "%GREETING"
 
 'Variables storing the configuration
 'They are set in LoadConfiguration()
@@ -674,7 +695,7 @@ Public Function ReFormatText(text As String) As String
                         If lengthName > 0 Then
                             sName = mid(curLine, posColon + 2, lengthName)
                         Else
-                            Debug.Print "Couldn´t get name. Is the header formatted correctly?"
+                            Debug.Print "CouldnÂ´t get name. Is the header formatted correctly?"
                         End If
                         
                         If posRightBracket = 0 Then
@@ -819,16 +840,16 @@ catch:
     Set OriginalMail = SelectedObject  'cast!!!
     
     
-    'mails that have not been sent can´t be replied to (draft mails)
+    'mails that have not been sent canÂ´t be replied to (draft mails)
     If Not OriginalMail.Sent Then
         MsgBox "This mail seems to be a draft, so it cannot be replied to.", vbExclamation
         Exit Sub
     End If
     
-    'we don´t understand HTML mails!!!
+    'we donÂ´t understand HTML mails!!!
     If Not (OriginalMail.BodyFormat = olFormatPlain) Then
         If CONVERT_TO_PLAIN Then
-            'Unfortunately, it´s only possible to convert the original mail as there is
+            'Unfortunately, itÂ´s only possible to convert the original mail as there is
             'no easy way to create a clone. Therefore, you cannot go back to the original format!
             'If you e.g. would decide that you need to forward the mail in HTML format,
             'this will not be possible anymore.
@@ -914,7 +935,20 @@ catch:
     MySignature = Replace(MySignature, PATTERN_SENT_DATE, Format(OriginalMail.SentOn, DATE_FORMAT))
     MySignature = Replace(MySignature, PATTERN_SENDER_NAME, senderName)
     
-        
+    '--------------------------------
+    'Extension for language detection
+    Dim detectedLanguage As String
+    detectedLanguage = DetectLanguage(OriginalMail.body)
+    
+    If (detectedLanguage = DEFAULT_LOCAL_LANG) Then
+        MySignature = Replace(MySignature, PATTERN_WISHES, DEFAULT_WISH_LOCAL)
+        MySignature = Replace(MySignature, PATTERN_GREETING, DEFAULT_GREETING_LOCAL)
+    Else
+        MySignature = Replace(MySignature, PATTERN_WISHES, DEFAULT_WISH_EN)
+        MySignature = Replace(MySignature, PATTERN_GREETING, DEFAULT_GREETING_EN)
+    End If
+    '--------------------------------
+    
     Dim OutlookHeader As String
     If CONDENSE_FIRST_EMBEDDED_QUOTED_OUTLOOK_HEADER Then
         OutlookHeader = ""
@@ -1394,3 +1428,93 @@ Public Sub DisplayMailItemByID(id As String)
     it.Display
     Set it = Nothing
 End Sub
+
+Public Function URLEncode(StringToEncode As String, Optional UsePlusRatherThanHexForSpace As Boolean = False) As String
+
+  Dim TempAns As String
+  Dim CurChr As Integer
+  CurChr = 1
+
+  Do Until CurChr - 1 = Len(StringToEncode)
+    Select Case Asc(Mid(StringToEncode, CurChr, 1))
+      Case 48 To 57, 65 To 90, 97 To 122
+        TempAns = TempAns & Mid(StringToEncode, CurChr, 1)
+      Case 32
+        If UsePlusRatherThanHexForSpace = True Then
+          TempAns = TempAns & "+"
+        Else
+          TempAns = TempAns & "%" & Hex(32)
+        End If
+      Case Else
+        TempAns = TempAns & "%" & _
+          Right("0" & Hex(Asc(Mid(StringToEncode, _
+          CurChr, 1))), 2)
+    End Select
+
+    CurChr = CurChr + 1
+  Loop
+
+  URLEncode = TempAns
+End Function
+
+Private Function RequestAuthToken() As String
+    
+    Dim objHTTP As Object
+    Dim URL As String
+    
+    Dim encodedClientID As String
+    Dim encodedClientSecret As String
+    
+    Dim body As String
+    
+    'Encode client properties for access token request
+    encodedClientID = URLEncode(AZURE_CLIENT_ID)
+    encodedClientSecret = URLEncode(AZURE_CLIENT_SECRET)
+    
+    Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
+    
+    'Define uri for Azure Data Market
+    URL = "https://datamarket.accesscontrol.windows.net/v2/OAuth2-13"
+
+    'Define the body of the request
+    body = "grant_type=client_credentials&client_id=" + encodedClientID + "&client_secret=" + encodedClientSecret + "&scope=http://api.microsofttranslator.com"
+    
+    'Send a POST request to access control service
+    objHTTP.Open "POST", URL, False
+    
+    'Define the content type for the request
+    objHTTP.setRequestHeader "Content-Type", "application/x-www-form-urlencoded"
+    objHTTP.Send (body)
+    
+    'extract access token from response
+    Dim responseJson As Object
+    Set responseJson = JSON.parse(objHTTP.responseText)
+    
+    RequestAuthToken = responseJson.Item("access_token")
+End Function
+
+Private Function DetectLanguage(SampleText As String) As String
+    
+    Dim objHTTP As Object
+    Dim URL As String
+    
+    'Request new access token for each call
+    Dim authToken As String
+    authToken = RequestAuthToken
+    
+    'encode text for GET request
+    'TODO: strip text for privacy
+    Dim encodedText As String
+    encodedText = URLEncode(SampleText)
+    
+    'Call language detect service
+    Set objHTTP = CreateObject("MSXML2.ServerXMLHTTP")
+    URL = "http://api.microsofttranslator.com/V2/Http.svc/Detect?Text=%27" + encodedText + "%27"
+    
+    objHTTP.Open "GET", URL, False
+    objHTTP.setRequestHeader "Authorization", "Bearer" + " " + authToken
+    objHTTP.Send
+    
+    'return language
+    DetectLanguage = objHTTP.responseXML.text
+End Function
